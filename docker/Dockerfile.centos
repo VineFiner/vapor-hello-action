@@ -1,0 +1,68 @@
+# ================================
+# Build image
+# ================================
+FROM swift:5.6.2-centos7 as builder
+
+# 安装更新和依赖
+#
+RUN yum update -y \
+    && yum remove git -y \
+    && yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm \
+    && yum install git -y
+
+# 设置构建目录
+#
+WORKDIR /build
+
+# 解决依赖
+# 这将创建一个可重复使用的缓存层
+#
+COPY ./Package.* ./
+RUN swift package resolve
+
+# 将整个仓库复制到容器中
+#
+COPY . .
+
+# 通过优化和测试构建
+#
+RUN sed -i -e 's/\*__block/\*__libc_block/g' /usr/include/unistd.h
+RUN swift build -c release --static-swift-stdlib
+
+# 切换到暂存目录
+#
+WORKDIR /staging
+
+# 复制可执行二进制文件
+#
+RUN cp "$(swift build --package-path /build -c release --show-bin-path)/Run" ./
+
+# 复制公共目录文件, 并配置只读权限
+#
+# RUN [ -d /build/Public ] && { mv /build/Public ./Public && chmod -R a-w ./Public; } || true
+RUN [ -d /build/Public ] && { mv /build/Public ./Public; } || true
+
+# 复制视图目录文件, 并配置只读权限
+#
+# RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R a-w ./Resources; } || true
+RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources; } || true
+
+# ================================
+# Production image 生产镜像
+# ================================
+FROM centos:7 as prod
+
+# 切换到工作目录
+WORKDIR /app
+
+# 从构建器复制构建的可执行文件,和所有暂存资源
+COPY --from=builder /staging /app
+
+# Let Docker bind to port 8080
+EXPOSE 8080
+
+# Start the Vapor service when the image is run, default to listening on 8080 in production environment
+ENTRYPOINT ["./Run"]
+CMD ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]
+
+# END

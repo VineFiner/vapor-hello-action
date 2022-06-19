@@ -1,0 +1,12 @@
+Packages
+.build
+xcuserdata
+*.xcodeproj
+DerivedData/
+.DS_Store
+db.sqlite
+.swiftpm
+Package.resolved
+app
+vapor_app-ubuntu.tar.gz
+vapor_app-centos.tar.gz

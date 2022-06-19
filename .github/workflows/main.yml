@@ -1,0 +1,78 @@
+# This is a basic workflow to help you get started with Actions
+# 这是帮助您开始使用操作的基本工作流程
+
+name: CI
+
+# Controls when the workflow will run
+# 控制工作流何时运行
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  # 在 push 或 pull_request 事件上触发工作流，但仅针对主分支
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  # 允许您从“操作”选项卡手动运行此工作流程
+  workflow_dispatch:
+
+# 全局环境变量
+env:
+  TKE_IMAGE_URL: ccr.ccs.tencentyun.com/demo/mywebapp
+  TKE_REGION: ap-guangzhou
+  TKE_CLUSTER_ID: cls-mywebapp
+  DEPLOYMENT_NAME: tke-test
+  
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# 工作流运行由一个或多个可以按顺序或并行运行的作业组成
+jobs:
+  # This workflow contains a single job called "build"
+  # 此工作流包含一个名为“build”的作业
+  build:
+    # The type of runner that the job will run on
+    # 作业将在其上运行的运行器类型
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    # 步骤表示将作为作业的一部分执行的一系列任务
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # 在 $GITHUB_WORKSPACE 下签出您的存储库，以便您的工作可以访问它
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      # 使用 runners shell 运行单个命令
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      # 使用 runners shell 运行一组命令
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
+  deploy:
+    # 作业: 名称
+    name: 部署任务
+    # 作业: 运行时
+    runs-on: ubuntu-latest
+    # 依赖上一个任务完成
+    needs: [build]
+
+    # 步骤表示将作为作业的一部分执行的一系列任务
+    steps:
+      # 在 $GITHUB_WORKSPACE 下签出您的存储库，以便您的工作可以访问它
+      - uses: actions/checkout@v2
+
+      # 使用 runners shell 运行单个命令
+      - name: 运行单行脚本
+        run: echo Hello, world!
+
+      # 使用 runners shell 运行一组命令
+      - name: 运行多行脚本
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
+          ls -a
+# END
